@@ -35,7 +35,8 @@ define Package/roc/Default/description
   streaming use case. The user writes the stream to the one end and reads it 
   from another end, and Roc deals with all the complexity of the task of 
   delivering data in time and with no loss. Encoding, decoding, adjusting 
-  rates, restoring losses – all these are performed transparently under the hood.
+  rates, restoring losses - all these are performed transparently under the hood.
+  ----YOU MUST INSTALL ragel in your HOST------
 endef
 
 define Package/roc
