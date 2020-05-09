@@ -59,7 +59,7 @@ CONFIGURE_ARGS += \
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include \
+		$(PKG_INSTALL_DIR)/usr/include/sox.h \
 		$(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) \
