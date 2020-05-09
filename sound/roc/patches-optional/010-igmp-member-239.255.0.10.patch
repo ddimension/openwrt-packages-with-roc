@@ -1,0 +1,102 @@
+diff --git a/src/modules/roc_netio/target_libuv/roc_netio/transceiver.cpp b/src/modules/roc_netio/target_libuv/roc_netio/transceiver.cpp
+index 69d8b93..94e2c14 100644
+--- a/src/modules/roc_netio/target_libuv/roc_netio/transceiver.cpp
++++ b/src/modules/roc_netio/target_libuv/roc_netio/transceiver.cpp
+@@ -117,6 +117,29 @@ bool Transceiver::add_udp_receiver(packet::Address& bind_address,
+     return task.result;
+ }
+ 
++
++bool Transceiver::add_udp_receiver_multicast(packet::Address& bind_address,
++                                   packet::IWriter& writer) {
++    if (!valid()) {
++        roc_panic("transceiver: can't use invalid transceiver");
++    }
++
++    Task task;
++    task.fn = &Transceiver::add_udp_receiver_;
++    task.address = &bind_address;
++    task.writer = &writer;
++
++    run_task_(task);
++
++    if (!task.result) {
++        if (task.port) {
++            wait_port_closed_(*task.port);
++        }
++    }
++
++    return task.result;
++}
++
+ packet::IWriter* Transceiver::add_udp_sender(packet::Address& bind_address) {
+     if (!valid()) {
+         roc_panic("transceiver: can't use invalid transceiver");
+diff --git a/src/modules/roc_netio/target_libuv/roc_netio/transceiver.h b/src/modules/roc_netio/target_libuv/roc_netio/transceiver.h
+index 36588ae..145be69 100644
+--- a/src/modules/roc_netio/target_libuv/roc_netio/transceiver.h
++++ b/src/modules/roc_netio/target_libuv/roc_netio/transceiver.h
+@@ -69,6 +69,20 @@ public:
+     //!  true on success or false if error occurred
+     bool add_udp_receiver(packet::Address& bind_address, packet::IWriter& writer);
+ 
++    //! Add UDP datagram receiver port with mulitcast group.
++    //!
++    //! Creates a new UDP receiver and bind it to @p bind_address. The receiver
++    //! will pass packets to @p writer. Writer will be called from the network
++    //! thread. It should not block.
++    //!
++    //! If IP is zero, INADDR_ANY is used, i.e. the socket is bound to all network
++    //! interfaces. If port is zero, a random free port is selected and written
++    //! back to @p bind_address.
++    //!
++    //! @returns
++    //!  true on success or false if error occurred
++    bool add_udp_receiver_multicast(packet::Address& bind_address, packet::IWriter& writer);
++
+     //! Add UDP datagram sender port.
+     //!
+     //! Creates a new UDP sender, bind to @p bind_address, and returns a writer
+@@ -91,6 +105,8 @@ private:
+         bool (Transceiver::*fn)(Task&);
+ 
+         packet::Address* address;
++        packet::Address* multicast_group;
++        packet::Address* multicast_interface;
+         packet::IWriter* writer;
+         BasicPort* port;
+ 
+@@ -100,6 +116,8 @@ private:
+         Task()
+             : fn(NULL)
+             , address(NULL)
++            , multicast_group(NULL)
++            , multicast_interface(NULL)
+             , writer(NULL)
+             , port(NULL)
+             , result(false)
+diff --git a/src/modules/roc_netio/target_libuv/roc_netio/udp_receiver_port.cpp b/src/modules/roc_netio/target_libuv/roc_netio/udp_receiver_port.cpp
+index 9c460f0..5315211 100644
+--- a/src/modules/roc_netio/target_libuv/roc_netio/udp_receiver_port.cpp
++++ b/src/modules/roc_netio/target_libuv/roc_netio/udp_receiver_port.cpp
+@@ -74,6 +74,8 @@ bool UDPReceiverPort::open() {
+         return false;
+     }
+ 
++    uv_udp_set_membership(&handle_, "239.255.0.10", NULL, UV_JOIN_GROUP);
++
+     int addrlen = (int)address_.slen();
+     if (int err = uv_udp_getsockname(&handle_, address_.saddr(), &addrlen)) {
+         roc_log(LogError, "udp receiver: uv_udp_getsockname(): [%s] %s", uv_err_name(err),
+diff --git a/src/modules/roc_netio/target_libuv/roc_netio/udp_sender_port.cpp b/src/modules/roc_netio/target_libuv/roc_netio/udp_sender_port.cpp
+index 0c758c2..a7b1de3 100644
+--- a/src/modules/roc_netio/target_libuv/roc_netio/udp_sender_port.cpp
++++ b/src/modules/roc_netio/target_libuv/roc_netio/udp_sender_port.cpp
+@@ -77,6 +77,7 @@ bool UDPSenderPort::open() {
+                 uv_strerror(bind_err));
+         return false;
+     }
++    uv_udp_set_membership(&handle_, "239.255.0.10", NULL, UV_JOIN_GROUP);
+ 
+     int addrlen = (int)address_.slen();
+     if (int err = uv_udp_getsockname(&handle_, address_.saddr(), &addrlen)) {
