@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=roc
-PKG_VERSION:=0.1.5
+PKG_VERSION:=0.1.5.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/roc-project/roc.git
-PKG_SOURCE_VERSION:=0b85cc8305598b20bb88cf1cfeada280a6e07d7c
+PKG_SOURCE_URL:=https://github.com/ddimension/roc.git
+PKG_SOURCE_VERSION:=8fabb207460594ac243fd6c6aef92ad09fc1e3b3
 
 PKG_MAINTAINER:=André Valentin <a.valentin@ddimension.net>
 PKG_LICENSE:=MPL-2.0
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/nls.mk
 include ../../devel/scons/scons.mk
 
 define Package/roc/Default
-  DEPENDS+= +openfec +libuv +alsa-lib +libstdcpp +libpthread +sox +libunwind +pulseaudio-daemon-avahi $(ICONV_DEPENDS) $(INTL_DEPENDS) 
+  DEPENDS+= +openfec +libuv +alsa-lib +libstdcpp +libatomic_ops +libpthread +sox +libunwind +pulseaudio-daemon-avahi $(ICONV_DEPENDS) $(INTL_DEPENDS) 
   URL:=https://roc-project.github.io/
 endef
 
@@ -56,11 +56,12 @@ SCONS_VARS += \
 
 SCONS_OPTIONS += \
 	--with-openfec-includes=$(STAGING_DIR)/usr/include/openfec \
+	--with-pulseaudio=$(BUILD_DIR)/pulseaudio-avahi/pulseaudio-13.0 \
+	--with-pulseaudio-build-dir=$(BUILD_DIR)/pulseaudio-avahi/pulseaudio-13.0/openwrt-build \
+	--enable-pulseaudio-modules \
 	--with-includes=$(STAGING_DIR)/usr/include \
 	--with-libraries=$(STAGING_DIR)/usr/lib \
 	--with-libraries=$(STAGING_DIR)/usr/lib/pulseaudio \
-	--disable-tests \
-	--disable-examples \
 	--disable-doc \
 	--host=$(REAL_GNU_TARGET_NAME) \
 	--build=$(GNU_HOST_NAME) \
@@ -85,6 +86,10 @@ define Package/roc/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/*/libroc.so.?.? $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/bin/*/libroc.so $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/bin/*/libroc.so.? $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pulse-13.0/modules
+	$(CP) $(PKG_BUILD_DIR)/bin/*/module-roc-sink.so $(1)/usr/lib/pulse-13.0/modules
+	$(CP) $(PKG_BUILD_DIR)/bin/*/module-roc-sink-input.so $(1)/usr/lib/pulse-13.0/modules
+	$(LN) pulseaudio/libpulsecommon-13.0.so $(1)/usr/lib/libpulsecommon-13.0.so
 endef
 
 $(eval $(call BuildPackage,roc))

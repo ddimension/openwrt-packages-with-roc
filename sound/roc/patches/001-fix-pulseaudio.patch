@@ -1,0 +1,25 @@
+--- r1/SConstruct	2020-05-10 14:59:53.000000000 +0200
++++ r2/SConstruct	2020-05-17 22:25:42.187142545 +0200
+@@ -864,8 +864,20 @@ if 'pulseaudio' in system_dependencies:
+             pa_src_dir + '/src',
+         ])
+ 
+-        for lib in ['libpulsecore-*.so', 'libpulsecommon-*.so']:
+-            path = '%s/src/.libs/%s' % (pa_build_dir, lib)
++        for lib in ['libpulsecore-*.so']:
++            path = '%s/src/pulsecore/%s' % (pa_build_dir, lib)
++            libs = env.Glob(path)
++            if not libs:
++                env.Die("can't find %s" % path)
++
++            pulse_env.Append(LIBS=libs)
++
++            m = re.search('-([0-9.]+).so$', libs[0].path)
++            if m:
++                pa_ver = m.group(1)
++
++        for lib in ['libpulsecommon-*.so']:
++            path = '%s/src/%s' % (pa_build_dir, lib)
+             libs = env.Glob(path)
+             if not libs:
+                 env.Die("can't find %s" % path)

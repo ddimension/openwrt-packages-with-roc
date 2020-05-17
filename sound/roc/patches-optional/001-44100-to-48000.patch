@@ -1,146 +1,82 @@
-diff -uNrp roc-0b85cc83.old/docs/sphinx/about_project/features.rst roc-0b85cc83/docs/sphinx/about_project/features.rst
---- roc-0b85cc83.old/docs/sphinx/about_project/features.rst	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/docs/sphinx/about_project/features.rst	2020-05-09 00:20:19.831803262 +0200
-@@ -40,7 +40,7 @@ Protocols and encodings
+diff -uNrp r1/src/library/example/basic_receiver_to_pulseaudio.c r2/src/library/example/basic_receiver_to_pulseaudio.c
+--- r1/src/library/example/basic_receiver_to_pulseaudio.c	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/library/example/basic_receiver_to_pulseaudio.c	2020-05-17 22:28:26.350619678 +0200
+@@ -30,7 +30,7 @@
+ #define MY_RECEIVER_REPAIR_PORT 10102
  
- * RTP
+ /* Signal parameters. */
+-#define MY_SAMPLE_RATE 44100
++#define MY_SAMPLE_RATE 48000
+ #define MY_NUM_CHANNELS 2
+ #define MY_BUFFER_SIZE 1000
  
--  * RTP AVP L16 encoding (lossless 44100Hz PCM 16-bit stereo)
-+  * RTP AVP L16 encoding (lossless 48000Hz PCM 16-bit stereo)
- 
- * FECFRAME
- 
-diff -uNrp roc-0b85cc83.old/docs/sphinx/internals/fe_resampler.rst roc-0b85cc83/docs/sphinx/internals/fe_resampler.rst
---- roc-0b85cc83.old/docs/sphinx/internals/fe_resampler.rst	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/docs/sphinx/internals/fe_resampler.rst	2020-05-09 00:20:19.831803262 +0200
-@@ -10,11 +10,11 @@ Problem
- 
- If you are going to roll your own media cast software you'll face few non-obvious pitfalls. This page provides a description of these obstacles and measures Roc took to avoid them.
- 
--Frequency generators are not created equal. 44100 Hz generated on different sound cards (even if the cards are similar) slightly differ in a few tens of Hertz. This gives us the difference in speed of samples transfer that leads to buffer overruns and underruns.
-+Frequency generators are not created equal. 48000 Hz generated on different sound cards (even if the cards are similar) slightly differ in a few tens of Hertz. This gives us the difference in speed of samples transfer that leads to buffer overruns and underruns.
- 
- Let's imagine an experiment. Assume two hosts, the first one sends sound via the network to the second one. The first host generates samples with 44090 Hz (every 22.681 us) and the second one transfers received samples to sound card with 44110 Hz (22.671 us). First one is slower in 10 ns for every sample. Every second incoming queue of the receiver diminishes for 0.441 ms of sound. Sooner or later it would dry up and the user would hear scratches. Likewise, if the sender is a bit faster than the receiver, the user would feel a delay between the picture on the screen and sound if she or he is watching a video. Both situations are not acceptable and Roc is designed to avoid them.
- 
--Here is the result of a real experiment. Sender and receiver were running on two computers in one LAN. The sample rate was 44100 Hz and the initial queue size was 10000 samples. The receiver soundcard turned out to be a bit faster than the sender soundcard. After about 60 minutes playback the delay between receiver and sender reached 10000 samples and the playback had broken. This means that every hour the receiver timer outruns the sender timer by approximately 200 milliseconds and the clock difference is about 0.0055%.
-+Here is the result of a real experiment. Sender and receiver were running on two computers in one LAN. The sample rate was 48000 Hz and the initial queue size was 10000 samples. The receiver soundcard turned out to be a bit faster than the sender soundcard. After about 60 minutes playback the delay between receiver and sender reached 10000 samples and the playback had broken. This means that every hour the receiver timer outruns the sender timer by approximately 200 milliseconds and the clock difference is about 0.0055%.
- 
- .. image:: ../_images/clock_difference.png
-     :align: center
-@@ -80,7 +80,7 @@ In order to hide these details from the
- Finally, it's worth to mention that the resampler is actually used for two purposes:
- 
- * to compensate for the frequency difference between the sender and receiver, as described above;
--* to convert the network sample rate to the soundcard sample rate, e.g. 44100 to 48000.
-+* to convert the network sample rate to the soundcard sample rate, e.g. 48000 to 48000.
- 
- To achieve this, the scaling factor passed to resampler is actually a product of two ratios:
- 
-diff -uNrp roc-0b85cc83.old/docs/sphinx/internals/glossary.rst roc-0b85cc83/docs/sphinx/internals/glossary.rst
---- roc-0b85cc83.old/docs/sphinx/internals/glossary.rst	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/docs/sphinx/internals/glossary.rst	2020-05-09 00:20:19.831803262 +0200
-@@ -37,7 +37,7 @@ Audio
-     An audio signal dimension. For example, stereo sound consists of two channels: left and right.
- 
- *sample rate*
--    The number of audio samples per channel per second. For example, if an audio stream has two channels and 44100 sample rate, it means that a second contains 44100 samples for the left channel and 44100 samples for the right channel.
-+    The number of audio samples per channel per second. For example, if an audio stream has two channels and 48000 sample rate, it means that a second contains 48000 samples for the left channel and 48000 samples for the right channel.
- 
- Packet
- ======
-diff -uNrp roc-0b85cc83.old/docs/sphinx/manuals/roc_recv.rst roc-0b85cc83/docs/sphinx/manuals/roc_recv.rst
---- roc-0b85cc83.old/docs/sphinx/manuals/roc_recv.rst	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/docs/sphinx/manuals/roc_recv.rst	2020-05-09 00:20:19.831803262 +0200
-@@ -162,7 +162,7 @@ Force a specific rate on the output devi
- 
- .. code::
- 
--    $ roc-recv -vv -s rtp+rs8m::10001 -r rs8m::10002 --rate=44100
-+    $ roc-recv -vv -s rtp+rs8m::10001 -r rs8m::10002 --rate=48000
- 
- Select higher session latency and timeouts:
- 
-diff -uNrp roc-0b85cc83.old/docs/sphinx/manuals/roc_send.rst roc-0b85cc83/docs/sphinx/manuals/roc_send.rst
---- roc-0b85cc83.old/docs/sphinx/manuals/roc_send.rst	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/docs/sphinx/manuals/roc_send.rst	2020-05-09 00:20:19.831803262 +0200
-@@ -135,7 +135,7 @@ Force a specific rate on the input devic
- 
- .. code::
- 
--    $ roc-send -vv -s rtp+rs8m:192.168.0.3:10001 -r rs8m:192.168.0.3:10002 --rate=44100
-+    $ roc-send -vv -s rtp+rs8m:192.168.0.3:10001 -r rs8m:192.168.0.3:10002 --rate=48000
- 
- Select the LDPC-Staircase FEC scheme and a larger block size:
- 
-diff -uNrp roc-0b85cc83.old/docs/sphinx/running/command_line_tools.rst roc-0b85cc83/docs/sphinx/running/command_line_tools.rst
---- roc-0b85cc83.old/docs/sphinx/running/command_line_tools.rst	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/docs/sphinx/running/command_line_tools.rst	2020-05-09 00:20:19.831803262 +0200
-@@ -49,7 +49,7 @@ Here is an example of starting the recei
-     [debug] roc_audio: watchdog: initializing: max_blank_duration=96000 max_drops_duration=96000 drop_detection_window=14400
-     [debug] roc_audio: resampler: initializing: window_interp=128 window_size=32 frame_size=640 channels_num=2
-     [debug] roc_audio: resampler reader: initializing window
--    [debug] roc_audio: latency monitor: initializing: target_latency=8820 in_rate=44100 out_rate=48000
-+    [debug] roc_audio: latency monitor: initializing: target_latency=8820 in_rate=48000 out_rate=48000
-     [debug] roc_packet: router: detected new stream: source=1995914915 flags=0x8u
-     [debug] roc_audio: depacketizer: ts=320 loss_ratio=0.00000
-     [debug] roc_audio: watchdog: status: bbbbbbbbbbbbbbbbbbbb
-@@ -91,11 +91,11 @@ Here is an example of starting the sende
-     [info] roc_sndio: [sox] wav.c: Searching for 64 61 74 61
-     [info] roc_sndio: [sox] wav.c: WAV Chunk LIST
-     [info] roc_sndio: [sox] wav.c: WAV Chunk data
--    [info] roc_sndio: [sox] wav.c: Reading Wave file: Microsoft PCM format, 2 channels, 44100 samp/sec
-+    [info] roc_sndio: [sox] wav.c: Reading Wave file: Microsoft PCM format, 2 channels, 48000 samp/sec
-     [info] roc_sndio: [sox] wav.c:         176400 byte/sec, 4 block align, 16 bits/samp, 28832256 data bytes
-     [info] roc_sndio: [sox] wav.c:         7208064 Samps/chans
-     [info] roc_sndio: [sox] wav.c: Searching for 4c 49 53 54
--    [info] roc_sndio: sox source: in_bits=16 out_bits=32 in_rate=44100 out_rate=0 in_ch=2, out_ch=0, is_file=1
-+    [info] roc_sndio: sox source: in_bits=16 out_bits=32 in_rate=48000 out_rate=0 in_ch=2, out_ch=0, is_file=1
-     [info] roc_netio: udp sender: opened port 0.0.0.0:48925
-     [debug] roc_fec: of encoder: initializing Reed-Solomon encoder
-     [debug] roc_sndio: pump: starting
-diff -uNrp roc-0b85cc83.old/src/lib/example/receiver_sox.c roc-0b85cc83/src/lib/example/receiver_sox.c
---- roc-0b85cc83.old/src/lib/example/receiver_sox.c	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/lib/example/receiver_sox.c	2020-05-09 00:20:19.831803262 +0200
-@@ -37,7 +37,7 @@
- /* Player parameters. */
- #define EXAMPLE_OUTPUT_DEVICE "default"
- #define EXAMPLE_OUTPUT_TYPE "alsa"
--#define EXAMPLE_SAMPLE_RATE 44100
-+#define EXAMPLE_SAMPLE_RATE 48000
- #define EXAMPLE_NUM_CHANNELS 2
- #define EXAMPLE_BUFFER_SIZE 1000
- 
-diff -uNrp roc-0b85cc83.old/src/lib/example/sender_sinewave.c roc-0b85cc83/src/lib/example/sender_sinewave.c
---- roc-0b85cc83.old/src/lib/example/sender_sinewave.c	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/lib/example/sender_sinewave.c	2020-05-09 00:20:19.835803250 +0200
-@@ -38,7 +38,7 @@
- #define EXAMPLE_RECEIVER_REPAIR_PORT 10002
+diff -uNrp r1/src/library/example/basic_sender_from_pulseaudio.c r2/src/library/example/basic_sender_from_pulseaudio.c
+--- r1/src/library/example/basic_sender_from_pulseaudio.c	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/library/example/basic_sender_from_pulseaudio.c	2020-05-17 22:28:26.350619678 +0200
+@@ -31,7 +31,7 @@
+ #define MY_RECEIVER_REPAIR_PORT 10102
  
  /* Signal parameters */
--#define EXAMPLE_SAMPLE_RATE 44100
-+#define EXAMPLE_SAMPLE_RATE 48000
- #define EXAMPLE_SINE_RATE 440
- #define EXAMPLE_SINE_SAMPLES (EXAMPLE_SAMPLE_RATE * 5)
- #define EXAMPLE_BUFFER_SIZE 100
-diff -uNrp roc-0b85cc83.old/src/lib/src/config.cpp roc-0b85cc83/src/lib/src/config.cpp
---- roc-0b85cc83.old/src/lib/src/config.cpp	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/lib/src/config.cpp	2020-05-09 00:20:19.835803250 +0200
-@@ -48,10 +48,10 @@ bool make_sender_config(pipeline::Sender
+-#define MY_SAMPLE_RATE 44100
++#define MY_SAMPLE_RATE 48000
+ #define MY_NUM_CHANNELS 2
+ #define MY_BUFFER_SIZE 1000
+ 
+diff -uNrp r1/src/library/example/basic_sender_sine_wave.c r2/src/library/example/basic_sender_sine_wave.c
+--- r1/src/library/example/basic_sender_sine_wave.c	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/library/example/basic_sender_sine_wave.c	2020-05-17 22:28:26.350619678 +0200
+@@ -29,7 +29,7 @@
+ #define MY_RECEIVER_REPAIR_PORT 10102
+ 
+ /* Signal parameters */
+-#define MY_SAMPLE_RATE 44100
++#define MY_SAMPLE_RATE 48000
+ #define MY_SINE_RATE 440
+ #define MY_SINE_DURATION (MY_SAMPLE_RATE * 10)
+ #define MY_BUFFER_SIZE 100
+diff -uNrp r1/src/library/example/send_receive_rtp.c r2/src/library/example/send_receive_rtp.c
+--- r1/src/library/example/send_receive_rtp.c	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/library/example/send_receive_rtp.c	2020-05-17 22:28:26.350619678 +0200
+@@ -31,7 +31,7 @@
+ #define MY_RECEIVER_REPAIR_PORT 10202
+ 
+ /* Signal parameters */
+-#define MY_SAMPLE_RATE 44100
++#define MY_SAMPLE_RATE 48000
+ #define MY_BUFFER_SIZE 2000
+ 
+ #define oops()                                                                           \
+diff -uNrp r1/src/library/example/send_receive_rtp_with_fecframe.c r2/src/library/example/send_receive_rtp_with_fecframe.c
+--- r1/src/library/example/send_receive_rtp_with_fecframe.c	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/library/example/send_receive_rtp_with_fecframe.c	2020-05-17 22:28:26.350619678 +0200
+@@ -34,7 +34,7 @@
+ #define MY_RECEIVER_REPAIR_PORT 10202
+ 
+ /* Signal parameters */
+-#define MY_SAMPLE_RATE 44100
++#define MY_SAMPLE_RATE 48000
+ #define MY_BUFFER_SIZE 2000
+ 
+ #define oops()                                                                           \
+diff -uNrp r1/src/library/src/config_helpers.cpp r2/src/library/src/config_helpers.cpp
+--- r1/src/library/src/config_helpers.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/library/src/config_helpers.cpp	2020-05-17 22:28:26.350619678 +0200
+@@ -44,10 +44,10 @@ bool sender_config_from_user(pipeline::S
          return false;
      }
  
 -    if (in.packet_sample_rate != 0 && in.packet_sample_rate != 44100) {
 +    if (in.packet_sample_rate != 0 && in.packet_sample_rate != 48000) {
-         roc_log(
-             LogError,
--            "roc_config: invalid packet_sample_rate, only 44100 is currently supported");
-+            "roc_config: invalid packet_sample_rate, only 48000 is currently supported");
+         roc_log(LogError,
+                 "bad configuration:"
+-                " invalid packet_sample_rate, only 44100 is currently supported");
++                " invalid packet_sample_rate, only 48000 is currently supported");
          return false;
      }
  
-diff -uNrp roc-0b85cc83.old/src/modules/roc_audio/depacketizer.cpp roc-0b85cc83/src/modules/roc_audio/depacketizer.cpp
---- roc-0b85cc83.old/src/modules/roc_audio/depacketizer.cpp	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/modules/roc_audio/depacketizer.cpp	2020-05-09 00:20:19.835803250 +0200
+diff -uNrp r1/src/modules/roc_audio/depacketizer.cpp r2/src/modules/roc_audio/depacketizer.cpp
+--- r1/src/modules/roc_audio/depacketizer.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/modules/roc_audio/depacketizer.cpp	2020-05-17 22:28:26.350619678 +0200
 @@ -24,7 +24,7 @@ inline void write_zeros(sample_t* buf, s
  
  inline void write_beep(sample_t* buf, size_t bufsz) {
@@ -150,9 +86,9 @@ diff -uNrp roc-0b85cc83.old/src/modules/roc_audio/depacketizer.cpp roc-0b85cc83/
      }
  }
  
-diff -uNrp roc-0b85cc83.old/src/modules/roc_pipeline/config.h roc-0b85cc83/src/modules/roc_pipeline/config.h
---- roc-0b85cc83.old/src/modules/roc_pipeline/config.h	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/modules/roc_pipeline/config.h	2020-05-09 00:20:19.835803250 +0200
+diff -uNrp r1/src/modules/roc_pipeline/config.h r2/src/modules/roc_pipeline/config.h
+--- r1/src/modules/roc_pipeline/config.h	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/modules/roc_pipeline/config.h	2020-05-17 22:28:26.350619678 +0200
 @@ -29,7 +29,7 @@ namespace roc {
  namespace pipeline {
  
@@ -162,9 +98,9 @@ diff -uNrp roc-0b85cc83.old/src/modules/roc_pipeline/config.h roc-0b85cc83/src/m
  
  //! Default channel mask.
  const packet::channel_mask_t DefaultChannelMask = 0x3;
-diff -uNrp roc-0b85cc83.old/src/modules/roc_rtp/format_map.cpp roc-0b85cc83/src/modules/roc_rtp/format_map.cpp
---- roc-0b85cc83.old/src/modules/roc_rtp/format_map.cpp	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/modules/roc_rtp/format_map.cpp	2020-05-09 00:20:19.835803250 +0200
+diff -uNrp r1/src/modules/roc_rtp/format_map.cpp r2/src/modules/roc_rtp/format_map.cpp
+--- r1/src/modules/roc_rtp/format_map.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/modules/roc_rtp/format_map.cpp	2020-05-17 22:28:26.350619678 +0200
 @@ -33,7 +33,7 @@ FormatMap::FormatMap()
          Format fmt;
          fmt.payload_type = PayloadType_L16_Mono;
@@ -183,9 +119,9 @@ diff -uNrp roc-0b85cc83.old/src/modules/roc_rtp/format_map.cpp roc-0b85cc83/src/
          fmt.channel_mask = 0x3;
          fmt.get_num_samples = audio::PCM_int16_2ch.samples_from_payload_size;
          fmt.new_encoder =
-diff -uNrp roc-0b85cc83.old/src/modules/roc_rtp/headers.h roc-0b85cc83/src/modules/roc_rtp/headers.h
---- roc-0b85cc83.old/src/modules/roc_rtp/headers.h	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/modules/roc_rtp/headers.h	2020-05-09 00:20:19.835803250 +0200
+diff -uNrp r1/src/modules/roc_rtp/headers.h r2/src/modules/roc_rtp/headers.h
+--- r1/src/modules/roc_rtp/headers.h	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/modules/roc_rtp/headers.h	2020-05-17 22:28:26.354619665 +0200
 @@ -27,8 +27,8 @@ enum Version {
  
  //! RTP payload type.
@@ -197,10 +133,10 @@ diff -uNrp roc-0b85cc83.old/src/modules/roc_rtp/headers.h roc-0b85cc83/src/modul
  };
  
  //! RTP header.
-diff -uNrp roc-0b85cc83.old/src/pulse/module-roc-sink.c roc-0b85cc83/src/pulse/module-roc-sink.c
---- roc-0b85cc83.old/src/pulse/module-roc-sink.c	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/pulse/module-roc-sink.c	2020-05-09 00:20:19.835803250 +0200
-@@ -219,7 +219,7 @@ int pa__init(pa_module* m) {
+diff -uNrp r1/src/pulse/module-roc-sink.c r2/src/pulse/module-roc-sink.c
+--- r1/src/pulse/module-roc-sink.c	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/pulse/module-roc-sink.c	2020-05-17 22:28:26.354619665 +0200
+@@ -220,7 +220,7 @@ int pa__init(pa_module* m) {
      /* prepare sample spec and channel map used in this sink */
      pa_sample_spec sample_spec;
      sample_spec.format = PA_SAMPLE_FLOAT32LE;
@@ -209,7 +145,7 @@ diff -uNrp roc-0b85cc83.old/src/pulse/module-roc-sink.c roc-0b85cc83/src/pulse/m
      sample_spec.channels = 2;
  
      pa_channel_map channel_map;
-@@ -273,7 +273,7 @@ int pa__init(pa_module* m) {
+@@ -267,7 +267,7 @@ int pa__init(pa_module* m) {
      roc_sender_config sender_config;
      memset(&sender_config, 0, sizeof(sender_config));
  
@@ -218,10 +154,10 @@ diff -uNrp roc-0b85cc83.old/src/pulse/module-roc-sink.c roc-0b85cc83/src/pulse/m
      sender_config.frame_channels = ROC_CHANNEL_SET_STEREO;
      sender_config.frame_encoding = ROC_FRAME_ENCODING_PCM_FLOAT;
  
-diff -uNrp roc-0b85cc83.old/src/pulse/module-roc-sink-input.c roc-0b85cc83/src/pulse/module-roc-sink-input.c
---- roc-0b85cc83.old/src/pulse/module-roc-sink-input.c	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/pulse/module-roc-sink-input.c	2020-05-09 00:20:19.835803250 +0200
-@@ -156,7 +156,7 @@ int pa__init(pa_module* m) {
+diff -uNrp r1/src/pulse/module-roc-sink-input.c r2/src/pulse/module-roc-sink-input.c
+--- r1/src/pulse/module-roc-sink-input.c	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/pulse/module-roc-sink-input.c	2020-05-17 22:28:26.354619665 +0200
+@@ -159,7 +159,7 @@ int pa__init(pa_module* m) {
      /* prepare sample spec and channel map used in this sink */
      pa_sample_spec sample_spec;
      sample_spec.format = PA_SAMPLE_FLOAT32LE;
@@ -230,7 +166,7 @@ diff -uNrp roc-0b85cc83.old/src/pulse/module-roc-sink-input.c roc-0b85cc83/src/p
      sample_spec.channels = 2;
  
      pa_channel_map channel_map;
-@@ -211,7 +211,7 @@ int pa__init(pa_module* m) {
+@@ -213,7 +213,7 @@ int pa__init(pa_module* m) {
      roc_receiver_config receiver_config;
      memset(&receiver_config, 0, sizeof(receiver_config));
  
@@ -239,10 +175,43 @@ diff -uNrp roc-0b85cc83.old/src/pulse/module-roc-sink-input.c roc-0b85cc83/src/p
      receiver_config.frame_channels = ROC_CHANNEL_SET_STEREO;
      receiver_config.frame_encoding = ROC_FRAME_ENCODING_PCM_FLOAT;
  
-diff -uNrp roc-0b85cc83.old/src/tests/roc_lib/test_sender_receiver.cpp roc-0b85cc83/src/tests/roc_lib/test_sender_receiver.cpp
---- roc-0b85cc83.old/src/tests/roc_lib/test_sender_receiver.cpp	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_lib/test_sender_receiver.cpp	2020-05-09 00:20:19.835803250 +0200
-@@ -37,7 +37,7 @@ namespace {
+diff -uNrp r1/src/tests/roc_audio/test_mixer.cpp r2/src/tests/roc_audio/test_mixer.cpp
+--- r1/src/tests/roc_audio/test_mixer.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_audio/test_mixer.cpp	2020-05-17 22:28:26.354619665 +0200
+@@ -20,7 +20,7 @@ namespace audio {
+ 
+ namespace {
+ 
+-enum { BufSz = 100, SampleRate = 44100,
++enum { BufSz = 100, SampleRate = 48000,
+        ChannelMask = 0x1, MaxBufSz = 500 };
+ 
+ const core::nanoseconds_t MaxBufDuration =
+diff -uNrp r1/src/tests/roc_library/test_context.cpp r2/src/tests/roc_library/test_context.cpp
+--- r1/src/tests/roc_library/test_context.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_library/test_context.cpp	2020-05-17 22:28:26.354619665 +0200
+@@ -54,7 +54,7 @@ TEST(context, reference_counting) {
+     {
+         roc_sender_config sender_config;
+         memset(&sender_config, 0, sizeof(sender_config));
+-        sender_config.frame_sample_rate = 44100;
++        sender_config.frame_sample_rate = 48000;
+         sender_config.frame_channels = ROC_CHANNEL_SET_STEREO;
+         sender_config.frame_encoding = ROC_FRAME_ENCODING_PCM_FLOAT;
+ 
+@@ -67,7 +67,7 @@ TEST(context, reference_counting) {
+         {
+             roc_receiver_config receiver_config;
+             memset(&receiver_config, 0, sizeof(receiver_config));
+-            receiver_config.frame_sample_rate = 44100;
++            receiver_config.frame_sample_rate = 48000;
+             receiver_config.frame_channels = ROC_CHANNEL_SET_STEREO;
+             receiver_config.frame_encoding = ROC_FRAME_ENCODING_PCM_FLOAT;
+ 
+diff -uNrp r1/src/tests/roc_library/test_helpers/utils.h r2/src/tests/roc_library/test_helpers/utils.h
+--- r1/src/tests/roc_library/test_helpers/utils.h	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_library/test_helpers/utils.h	2020-05-17 22:28:26.354619665 +0200
+@@ -18,7 +18,7 @@ namespace {
  enum {
      MaxBufSize = 500,
  
@@ -251,9 +220,33 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_lib/test_sender_receiver.cpp roc-0b85c
      NumChans = 2,
  
      SourcePackets = 10,
-diff -uNrp roc-0b85cc83.old/src/tests/roc_pipeline/test_converter.cpp roc-0b85cc83/src/tests/roc_pipeline/test_converter.cpp
---- roc-0b85cc83.old/src/tests/roc_pipeline/test_converter.cpp	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_pipeline/test_converter.cpp	2020-05-09 00:20:19.835803250 +0200
+diff -uNrp r1/src/tests/roc_library/test_receiver.cpp r2/src/tests/roc_library/test_receiver.cpp
+--- r1/src/tests/roc_library/test_receiver.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_library/test_receiver.cpp	2020-05-17 22:28:26.354619665 +0200
+@@ -27,7 +27,7 @@ TEST_GROUP(receiver) {
+         CHECK(context);
+ 
+         memset(&receiver_config, 0, sizeof(receiver_config));
+-        receiver_config.frame_sample_rate = 44100;
++        receiver_config.frame_sample_rate = 48000;
+         receiver_config.frame_channels = ROC_CHANNEL_SET_STEREO;
+         receiver_config.frame_encoding = ROC_FRAME_ENCODING_PCM_FLOAT;
+     }
+diff -uNrp r1/src/tests/roc_library/test_sender.cpp r2/src/tests/roc_library/test_sender.cpp
+--- r1/src/tests/roc_library/test_sender.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_library/test_sender.cpp	2020-05-17 22:28:26.354619665 +0200
+@@ -28,7 +28,7 @@ TEST_GROUP(sender) {
+ 
+         memset(&sender_config, 0, sizeof(sender_config));
+         sender_config.fec_code = ROC_FEC_DISABLE;
+-        sender_config.frame_sample_rate = 44100;
++        sender_config.frame_sample_rate = 48000;
+         sender_config.frame_channels = ROC_CHANNEL_SET_STEREO;
+         sender_config.frame_encoding = ROC_FRAME_ENCODING_PCM_FLOAT;
+     }
+diff -uNrp r1/src/tests/roc_pipeline/test_converter_sink.cpp r2/src/tests/roc_pipeline/test_converter_sink.cpp
+--- r1/src/tests/roc_pipeline/test_converter_sink.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_pipeline/test_converter_sink.cpp	2020-05-17 22:28:26.354619665 +0200
 @@ -23,7 +23,7 @@ namespace {
  enum {
      MaxBufSize = 1000,
@@ -263,9 +256,21 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_pipeline/test_converter.cpp roc-0b85cc
      ChMask = 0x3,
      NumCh = 2,
  
-diff -uNrp roc-0b85cc83.old/src/tests/roc_pipeline/test_receiver.cpp roc-0b85cc83/src/tests/roc_pipeline/test_receiver.cpp
---- roc-0b85cc83.old/src/tests/roc_pipeline/test_receiver.cpp	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_pipeline/test_receiver.cpp	2020-05-09 00:20:19.835803250 +0200
+diff -uNrp r1/src/tests/roc_pipeline/test_converter_source.cpp r2/src/tests/roc_pipeline/test_converter_source.cpp
+--- r1/src/tests/roc_pipeline/test_converter_source.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_pipeline/test_converter_source.cpp	2020-05-17 22:28:26.354619665 +0200
+@@ -23,7 +23,7 @@ namespace {
+ enum {
+     MaxBufSize = 1000,
+ 
+-    SampleRate = 44100,
++    SampleRate = 48000,
+     ChMask = 0x3,
+     NumCh = 2,
+ 
+diff -uNrp r1/src/tests/roc_pipeline/test_receiver_source.cpp r2/src/tests/roc_pipeline/test_receiver_source.cpp
+--- r1/src/tests/roc_pipeline/test_receiver_source.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_pipeline/test_receiver_source.cpp	2020-05-17 22:28:26.354619665 +0200
 @@ -30,7 +30,7 @@ const rtp::PayloadType PayloadType = rtp
  enum {
      MaxBufSize = 500,
@@ -275,9 +280,9 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_pipeline/test_receiver.cpp roc-0b85cc8
      ChMask = 0x3,
      NumCh = 2,
  
-diff -uNrp roc-0b85cc83.old/src/tests/roc_pipeline/test_sender.cpp roc-0b85cc83/src/tests/roc_pipeline/test_sender.cpp
---- roc-0b85cc83.old/src/tests/roc_pipeline/test_sender.cpp	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_pipeline/test_sender.cpp	2020-05-09 00:20:19.835803250 +0200
+diff -uNrp r1/src/tests/roc_pipeline/test_sender_sink.cpp r2/src/tests/roc_pipeline/test_sender_sink.cpp
+--- r1/src/tests/roc_pipeline/test_sender_sink.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_pipeline/test_sender_sink.cpp	2020-05-17 22:28:26.354619665 +0200
 @@ -31,7 +31,7 @@ rtp::PayloadType PayloadType = rtp::Payl
  enum {
      MaxBufSize = 1000,
@@ -287,10 +292,10 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_pipeline/test_sender.cpp roc-0b85cc83/
      ChMask = 0x3,
      NumCh = 2,
  
-diff -uNrp roc-0b85cc83.old/src/tests/roc_pipeline/test_sender_receiver.cpp roc-0b85cc83/src/tests/roc_pipeline/test_sender_receiver.cpp
---- roc-0b85cc83.old/src/tests/roc_pipeline/test_sender_receiver.cpp	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_pipeline/test_sender_receiver.cpp	2020-05-09 00:20:19.835803250 +0200
-@@ -28,7 +28,7 @@ namespace {
+diff -uNrp r1/src/tests/roc_pipeline/test_sender_sink_receiver_source.cpp r2/src/tests/roc_pipeline/test_sender_sink_receiver_source.cpp
+--- r1/src/tests/roc_pipeline/test_sender_sink_receiver_source.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_pipeline/test_sender_sink_receiver_source.cpp	2020-05-17 22:28:26.358619652 +0200
+@@ -29,7 +29,7 @@ namespace {
  enum {
      MaxBufSize = 500,
  
@@ -299,10 +304,10 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_pipeline/test_sender_receiver.cpp roc-
      ChMask = 0x3,
      NumCh = 2,
  
-diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.h roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.h
---- roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.h	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.h	2020-05-09 00:20:19.835803250 +0200
-@@ -47,7 +47,7 @@ static PacketInfo rtp_l16_1ch_10s_12ext
+diff -uNrp r1/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.h r2/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.h
+--- r1/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.h	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.h	2020-05-17 22:28:26.358619652 +0200
+@@ -48,7 +48,7 @@ static PacketInfo rtp_l16_1ch_10s_12ext
    /* num_channels     */ 1u,
    /* num_samples      */ 10u,
    /* samplebits       */ 16u,
@@ -311,9 +316,9 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext
  
    /* samples          */ {
      /* channel #0       */ { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
-diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.json roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.json
---- roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.json	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.json	2020-05-09 00:20:19.835803250 +0200
+diff -uNrp r1/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.json r2/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.json
+--- r1/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.json	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext.json	2020-05-17 22:28:26.358619652 +0200
 @@ -20,7 +20,7 @@
      "num_channels": 1,
      "num_samples": 10,
@@ -323,10 +328,10 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_12ext
      "samples": [
          [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
      ]
-diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.h roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.h
---- roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.h	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.h	2020-05-09 00:20:19.835803250 +0200
-@@ -48,7 +48,7 @@ static PacketInfo rtp_l16_1ch_10s_4pad_2
+diff -uNrp r1/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.h r2/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.h
+--- r1/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.h	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.h	2020-05-17 22:28:26.358619652 +0200
+@@ -49,7 +49,7 @@ static PacketInfo rtp_l16_1ch_10s_4pad_2
    /* num_channels     */ 1u,
    /* num_samples      */ 10u,
    /* samplebits       */ 16u,
@@ -335,9 +340,9 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_
  
    /* samples          */ {
      /* channel #0       */ { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
-diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.json roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.json
---- roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.json	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.json	2020-05-09 00:20:19.835803250 +0200
+diff -uNrp r1/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.json r2/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.json
+--- r1/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.json	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_2csrc_12ext_marker.json	2020-05-17 22:28:26.358619652 +0200
 @@ -20,7 +20,7 @@
      "num_channels": 1,
      "num_samples": 10,
@@ -347,10 +352,10 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_1ch_10s_4pad_
      "samples": [
          [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
      ]
-diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.h roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.h
---- roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.h	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.h	2020-05-09 00:20:19.835803250 +0200
-@@ -151,7 +151,7 @@ static PacketInfo rtp_l16_2ch_300s_80pad
+diff -uNrp r1/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.h r2/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.h
+--- r1/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.h	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.h	2020-05-17 22:28:26.358619652 +0200
+@@ -152,7 +152,7 @@ static PacketInfo rtp_l16_2ch_300s_80pad
    /* num_channels     */ 2u,
    /* num_samples      */ 300u,
    /* samplebits       */ 16u,
@@ -359,9 +364,9 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pa
  
    /* samples          */ {
      /* channel #0       */ {
-diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.json roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.json
---- roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.json	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.json	2020-05-09 00:20:19.835803250 +0200
+diff -uNrp r1/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.json r2/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.json
+--- r1/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.json	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pad.json	2020-05-17 22:28:26.358619652 +0200
 @@ -20,7 +20,7 @@
      "num_channels": 2,
      "num_samples": 300,
@@ -371,10 +376,10 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_2ch_300s_80pa
      "samples": [
          [
              -22, -23, -24, -25, -26, -26, -27, -27, -27, -27, -28,
-diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.h roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.h
---- roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.h	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.h	2020-05-09 00:20:19.835803250 +0200
-@@ -151,7 +151,7 @@ static PacketInfo rtp_l16_2ch_320s = {
+diff -uNrp r1/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.h r2/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.h
+--- r1/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.h	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.h	2020-05-17 22:28:26.358619652 +0200
+@@ -152,7 +152,7 @@ static PacketInfo rtp_l16_2ch_320s = {
    /* num_channels     */ 2u,
    /* num_samples      */ 320u,
    /* samplebits       */ 16u,
@@ -383,9 +388,9 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.h ro
  
    /* samples          */ {
      /* channel #0       */ {
-diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.json roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.json
---- roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.json	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.json	2020-05-09 00:20:19.835803250 +0200
+diff -uNrp r1/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.json r2/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.json
+--- r1/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.json	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.json	2020-05-17 22:28:26.358619652 +0200
 @@ -20,7 +20,7 @@
      "num_channels": 2,
      "num_samples": 320,
@@ -395,39 +400,39 @@ diff -uNrp roc-0b85cc83.old/src/tests/roc_rtp/test_packets/rtp_l16_2ch_320s.json
      "samples": [
          [
              -22, -23, -24, -25, -26, -26, -27, -27, -27, -27, -28,
-diff -uNrp roc-0b85cc83.old/src/tests/roc_sndio/target_sox/test_pump.cpp roc-0b85cc83/src/tests/roc_sndio/target_sox/test_pump.cpp
---- roc-0b85cc83.old/src/tests/roc_sndio/target_sox/test_pump.cpp	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_sndio/target_sox/test_pump.cpp	2020-05-09 00:20:19.835803250 +0200
+diff -uNrp r1/src/tests/roc_sndio/target_sox/test_pump.cpp r2/src/tests/roc_sndio/target_sox/test_pump.cpp
+--- r1/src/tests/roc_sndio/target_sox/test_pump.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_sndio/target_sox/test_pump.cpp	2020-05-17 22:28:26.358619652 +0200
 @@ -24,7 +24,7 @@ namespace sndio {
  
  namespace {
  
--enum { MaxBufSize = 8192, FrameSize = 512, SampleRate = 44100, ChMask = 0x3 };
-+enum { MaxBufSize = 8192, FrameSize = 512, SampleRate = 48000, ChMask = 0x3 };
+-enum { BufSize = 512, SampleRate = 44100, ChMask = 0x3 };
++enum { BufSize = 512, SampleRate = 48000, ChMask = 0x3 };
  
- core::HeapAllocator allocator;
- core::BufferPool<audio::sample_t> buffer_pool(allocator, MaxBufSize, true);
-diff -uNrp roc-0b85cc83.old/src/tests/roc_sndio/target_sox/test_sox_sink.cpp roc-0b85cc83/src/tests/roc_sndio/target_sox/test_sox_sink.cpp
---- roc-0b85cc83.old/src/tests/roc_sndio/target_sox/test_sox_sink.cpp	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_sndio/target_sox/test_sox_sink.cpp	2020-05-09 00:20:19.835803250 +0200
+ const core::nanoseconds_t BufDuration =
+     BufSize * core::Second / (SampleRate * packet::num_channels(ChMask));
+diff -uNrp r1/src/tests/roc_sndio/target_sox/test_sox_sink.cpp r2/src/tests/roc_sndio/target_sox/test_sox_sink.cpp
+--- r1/src/tests/roc_sndio/target_sox/test_sox_sink.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_sndio/target_sox/test_sox_sink.cpp	2020-05-17 22:28:26.358619652 +0200
 @@ -17,7 +17,7 @@ namespace sndio {
  
  namespace {
  
--enum { FrameSize = 512, SampleRate = 44100, ChMask = 0x3 };
-+enum { FrameSize = 512, SampleRate = 48000, ChMask = 0x3 };
+-enum { FrameSize = 500, SampleRate = 44100, ChMask = 0x3 };
++enum { FrameSize = 500, SampleRate = 48000, ChMask = 0x3 };
  
- core::HeapAllocator allocator;
- 
-diff -uNrp roc-0b85cc83.old/src/tests/roc_sndio/target_sox/test_sox_source.cpp roc-0b85cc83/src/tests/roc_sndio/target_sox/test_sox_source.cpp
---- roc-0b85cc83.old/src/tests/roc_sndio/target_sox/test_sox_source.cpp	2020-05-01 20:52:37.000000000 +0200
-+++ roc-0b85cc83/src/tests/roc_sndio/target_sox/test_sox_source.cpp	2020-05-09 00:20:19.835803250 +0200
-@@ -23,7 +23,7 @@ namespace sndio {
- 
- namespace {
- 
--enum { MaxBufSize = 8192, FrameSize = 512, SampleRate = 44100, ChMask = 0x3 };
-+enum { MaxBufSize = 8192, FrameSize = 512, SampleRate = 48000, ChMask = 0x3 };
- 
- core::HeapAllocator allocator;
- core::BufferPool<audio::sample_t> buffer_pool(allocator, MaxBufSize, true);
+ const core::nanoseconds_t FrameDuration =
+     FrameSize * core::Second / (SampleRate * packet::num_channels(ChMask));
+diff -uNrp r1/src/tests/roc_sndio/target_sox/test_sox_source.cpp r2/src/tests/roc_sndio/target_sox/test_sox_source.cpp
+--- r1/src/tests/roc_sndio/target_sox/test_sox_source.cpp	2020-05-10 14:59:53.000000000 +0200
++++ r2/src/tests/roc_sndio/target_sox/test_sox_source.cpp	2020-05-17 22:28:26.358619652 +0200
+@@ -26,7 +26,7 @@ namespace {
+ enum {
+     MaxBufSize = 8192,
+     FrameSize = 500,
+-    SampleRate = 44100,
++    SampleRate = 48000,
+     ChMask = 0x3,
+     NumChans = 2
+ };
